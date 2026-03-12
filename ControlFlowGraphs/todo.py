@@ -60,7 +60,24 @@ def test_min3(x, y, z):
         >>> test_min3(5, 4, 3)
         3
     """
-    # TODO: Implement this method
+    env = Env({"x" : x, "y": y, "z": z, "zero": 0})
+    x_min = Add("answer", "x", "zero")
+    y_min = Add("answer", "y", "zero")
+    z_min = Add("answer", "z", "zero")
+    prev_min = Add("answer", "answer", "zero") 
+
+    start = Lth("p", "x", "y")
+    branch1 = Bt("p", x_min, y_min)
+    cmp1 = Lth("p", "answer", "z")
+    branch2 = Bt("p", prev_min, z_min)
+
+    start.add_next(branch1)
+    x_min.add_next(cmp1)
+    y_min.add_next(cmp1)
+    cmp1.add_next(branch2)
+    
+    interp(start, env)
+
     return env.get("answer")
 
 
@@ -77,6 +94,22 @@ def test_div(m, n):
         0
     """
     # TODO: Implement this method
+    env = Env({"m": m, "n": n, "zero": 0, "n_neg": -n, "one": 1})
+   
+    start = Add("answer", "zero", "zero")
+    finish = Add("answer", "answer", "zero")
+    sub = Add("m", "m", "n_neg")
+    
+    cmp = Lth("p", "m", "n")
+    branch1 = Bt("p", finish, sub)
+    update_ans = Add("answer", "answer", "one")
+
+    start.add_next(cmp)
+    cmp.add_next(branch1)
+    sub.add_next(update_ans)
+    update_ans.add_next(cmp)
+
+    interp(start, env)
     return env.get("answer")
 
 
@@ -89,4 +122,20 @@ def test_fact(n):
         6
     """
     # TODO: Implement this method
+    env = Env({"n": n, "zero": 0, "one_neg": -1, "one": 1})
+
+    start = Add("answer", "zero", "one") 
+    finish = Add("answer", "answer", "zero")
+    mul = Mul("answer", "answer", "n")
+    change_n = Add("n", "n", "one_neg")
+
+    cmp = Lth("p", "zero", "n")
+    branch = Bt("p", mul, finish)
+    
+    start.add_next(cmp)
+    cmp.add_next(branch)
+    mul.add_next(change_n)
+    change_n.add_next(cmp)
+
+    interp(start, env)
     return env.get("answer")
