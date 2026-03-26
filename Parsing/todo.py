@@ -177,8 +177,6 @@ def line2instr(tokens: List[ScannedToken]) -> Tuple[List[Inst], Dict[int, int]]:
 
     return instructions, bt_target
 
-    return instructions, bt_target
-
 def link_inst(tokens: List[Inst], bt_target: Dict[int, int]):
     for i, token in enumerate(tokens):
         if isinstance(token, Bt):
