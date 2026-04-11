@@ -48,9 +48,7 @@ if __name__ == "__main__":
     lang.Inst.next_index = 0
     lines = sys.stdin.readlines()
     env, program = parser.file2cfg_and_env(lines)
-    # print_instructions(program)
     equations = dataflow.liveness_constraint_gen(program)
-    # equations = dataflow.reaching_defs_constraint_gen(program)
     df_env = dataflow.abstract_interp(equations)
     init_in = df_env[dataflow.name_in(program[0].ID)]
     check_environment(env, init_in)
