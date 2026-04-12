@@ -250,7 +250,7 @@ class ReachingDefs_IN_Eq(IN_Eq):
             solution = solution.union(data_flow_env[name_out(inst.ID)])
         return solution
 
-    def deps(self) -> list[str]:
+    def deps(self):
         """
         The list of dependencies of this equation. Ex.:
             >>> Inst.next_index = 0
@@ -263,8 +263,7 @@ class ReachingDefs_IN_Eq(IN_Eq):
             >>> sorted(df.deps())
             ['OUT_0', 'OUT_1']
         """
-        # TODO: Implement this method
-        return []
+        return [name_out(inst.ID) for inst in self.inst.preds]
 
     def __str__(self):
         """
@@ -283,7 +282,6 @@ class ReachingDefs_IN_Eq(IN_Eq):
         """
         succs = ", ".join([name_out(pred.ID) for pred in self.inst.preds])
         return f"{self.name()}: Union( {succs} )"
-
 
 def reaching_defs_constraint_gen(insts):
     """
@@ -308,7 +306,7 @@ def reaching_defs_constraint_gen(insts):
     return in0 + in1 + out
 
 
-def abstract_interp(equations):
+def abstract_interp_chaotic(equations):
     """
     This function iterates on the equations, solving them in the order in which
     they appear. It returns an environment with the solution to the data-flow
@@ -334,7 +332,7 @@ def abstract_interp(equations):
     return (env, DataFlowEq.num_evals)
 
 
-def build_dependence_graph(equations) -> dict[str, list[DataFlowEq]]:
+def build_dependence_graph(equations):
     """
     This function builds the dependence graph of equations.
 
@@ -350,10 +348,14 @@ def build_dependence_graph(equations) -> dict[str, list[DataFlowEq]]:
     """
     # TODO: implement this method
     dep_graph = {eq.name(): [] for eq in equations}
+    for eq in equations:
+        dependents = eq.deps()
+        for dependent in dependents:
+            dep_graph[dependent].append(eq)
     return dep_graph
 
 
-def abstract_interp(equations) -> tuple[Env, int]:
+def abstract_interp_worklist(equations):
     """
     This function solves the system of equations using a worklist. Once an
     equation E is evaluated, and the evaluation changes the environment, only
@@ -373,5 +375,12 @@ def abstract_interp(equations) -> tuple[Env, int]:
     from collections import defaultdict
 
     DataFlowEq.num_evals = 0
-    env = defaultdict(list)
+    dep_graph = build_dependence_graph(equations)
+
+    worklist = [eq for eq in equations]
+    env = {eq.name(): set() for eq in equations}
+    while worklist:
+        curr_equation = worklist.pop()
+        if curr_equation.eval(env):
+            worklist.extend(dep_graph[curr_equation.name()])
     return (env, DataFlowEq.num_evals)
