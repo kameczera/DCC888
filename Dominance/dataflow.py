@@ -21,7 +21,7 @@ class DataFlowEq(ABC):
 
     @classmethod
     @abstractmethod
-    def name(self) -> str:
+    def name(self):
         """
         The name of a data-flow equation is used to retrieve the data-flow
         facts associated with that equation in the environment. For instance,
@@ -37,7 +37,7 @@ class DataFlowEq(ABC):
 
     @classmethod
     @abstractmethod
-    def eval_aux(self, data_flow_env) -> set:
+    def eval_aux(self, data_flow_env):
         """
         This method determines how each concrete equation evaluates itself.
         In a way, this design implements the 'template method' pattern. In other
@@ -48,7 +48,7 @@ class DataFlowEq(ABC):
         """
         raise NotImplementedError
 
-    def eval(self, data_flow_env) -> bool:
+    def eval(self, data_flow_env):
         """
         This method implements the abstract evaluation of a data-flow equation.
         Notice that the actual semantics of this evaluation will be implemented
@@ -66,7 +66,7 @@ class Dominance_Eq(DataFlowEq):
     dominators of the predecessors of v.
     """
 
-    def eval_aux(self, env: dict[str, set[int]]) -> set[int]:
+    def eval_aux(self, env):
         """
         The evaluation of the meet operation for the dominance relation.
         Basically: D[n] = {n} U Intersection(D[p], for p in n.preds)
@@ -91,8 +91,11 @@ class Dominance_Eq(DataFlowEq):
             >>> sorted(df.eval_aux({'1': {0, 1}, '2': {0, 2}}))
             [0, 3]
         """
-        # TODO: Implement this method.
-        return set()
+        intersection = UniversalSet()
+        for pred in self.inst.preds:
+            pred_set = env.get(str(pred.ID), UniversalSet())
+            intersection = intersection & pred_set
+        return {self.inst.ID} | intersection
 
     def name(self):
         """
@@ -129,7 +132,7 @@ class Dominance_Eq(DataFlowEq):
         return f"D({self.name()}) = set({self.inst.ID}) U Intersection( {ps} )"
 
 
-def dominance_constraint_gen(insts: list[Inst]) -> list[Dominance_Eq]:
+def dominance_constraint_gen(insts):
     """
     Builds a list of equations to solve Dominance Analysis for the given set of
     instructions.
@@ -148,8 +151,7 @@ def dominance_constraint_gen(insts: list[Inst]) -> list[Dominance_Eq]:
         >>> sol[3]
         'D(3) = set(3) U Intersection( D(0), D(1), D(2) )'
     """
-    # TODO: Implement this function.
-    return []
+    return [Dominance_Eq(inst) for inst in insts]
 
 
 class UniversalSet(set):
@@ -183,7 +185,7 @@ class UniversalSet(set):
         return other
 
 
-def abstract_interp(equations: list[Dominance_Eq]) -> dict[str, set[int]]:
+def abstract_interp(equations):
     """
     This function iterates on the equations, solving them in the order in which
     they appear. It returns an environment with the solution to the data-flow
@@ -237,6 +239,10 @@ def abstract_interp(equations: list[Dominance_Eq]) -> dict[str, set[int]]:
         >>> f"D(0): {sorted(s['0'])}, D(1): {sorted(s['1'])}"
         'D(0): [0], D(1): [0, 1]'
     """
-    # TODO: Implement this function.
     env = {eq.name(): UniversalSet() for eq in equations}
+    while True:
+        for eq in equations:
+            if eq.eval(env):
+                continue
+        break
     return env

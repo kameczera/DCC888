@@ -28,3 +28,4 @@ if __name__ == "__main__":
     (env_worklist, n_worklist) = worklist_solver(program)
     print(f"Are the environments the same? {env_chaotic == env_worklist}")
     print(f"Does it iterate less than chaotic-sol? {n_worklist <= n_chaotic}")
+    print(f"{n_worklist}, {n_chaotic}")
